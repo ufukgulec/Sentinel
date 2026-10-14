@@ -28,6 +28,9 @@ Sentinel, yalnızca servislerin erişilebilirliğini kontrol etmekle kalmaz; ayn
 - Hata enjeksiyonu ile farklı arıza senaryolarını simüle etmek.
 - Docker Compose ile birbirinden bağımsız servisleri birlikte çalıştırmak.
 
+## 📸 Demo ve Ekran Görüntüleri
+<img width="832" height="676" alt="resim" src="https://github.com/user-attachments/assets/df85fa4b-c189-4f78-bada-123544d0d47c" />
+
 ## 🏗️ Mimari Genel Bakış
 
 Sentinel, birbirinden bağımsız çalışan üç temel bileşenden oluşur:
