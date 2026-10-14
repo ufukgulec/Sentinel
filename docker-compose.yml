@@ -1,0 +1,35 @@
+services:
+  sentinel-api:
+    build:
+      context: ./src/Sentinel.Api
+      dockerfile: Dockerfile
+    container_name: sentinel-api
+    ports:
+      - "5000:8080"
+    networks:
+      - sentinel-net
+
+  sentinel-worker:
+    build:
+      context: ./src/Sentinel.Worker
+      dockerfile: Dockerfile
+    container_name: sentinel-worker
+    depends_on:
+      - sentinel-api
+      - dummy-service
+    networks:
+      - sentinel-net
+
+  dummy-service:
+    build:
+      context: ./src/Sentinel.DummyService
+      dockerfile: Dockerfile
+    container_name: dummy-service
+    ports:
+      - "5001:8080"
+    networks:
+      - sentinel-net
+
+networks:
+  sentinel-net:
+    driver: bridge

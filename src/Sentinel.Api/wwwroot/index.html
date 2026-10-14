@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Sentinel - Distributed Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #1e293b; padding: 30px; border-radius: 12px; width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); border: 1px solid #334155; }
+        h2 { margin-top: 0; font-size: 1.25rem; border-bottom: 1px solid #334155; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .info-row { display: flex; justify-content: space-between; margin: 12px 0; font-size: 0.95rem; }
+        .healthy { color: #4ade80; font-weight: bold; }
+        .unhealthy { color: #f87171; font-weight: bold; }
+        .warning { color: #facc15; font-weight: bold; }
+        .time { color: #94a3b8; font-size: 0.85rem; text-align: right; margin-top: 15px; }
+        
+        /* Admin Kontrol Butonları */
+        .admin-panel { margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px; display: flex; gap: 10px; justify-content: space-between; }
+        button { flex: 1; padding: 8px 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.85rem; transition: background 0.2s; }
+        .btn-fault { background: #ef4444; color: white; }
+        .btn-fault:hover { background: #dc2626; }
+        .btn-slow { background: #f59e0b; color: white; }
+        .btn-slow:hover { background: #d97706; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2><span>🛡️ Sentinel Hub</span> <small style="font-size: 0.75rem; color: #94a3b8;" id="uptime">Uptime: 0 dk</small></h2>
+        
+        <div class="info-row"><span>Hedef Servis:</span><strong id="serviceName">-</strong></div>
+        <div class="info-row"><span>Durum:</span><span id="status" class="healthy">Bekleniyor...</span></div>
+        <div class="info-row"><span>Gecikme:</span><span id="latency">-</span></div>
+        <div class="info-row"><span>Art Arda Hata:</span><strong id="failures">0</strong></div>
+        <div class="info-row"><span>Toplam İstek:</span><span id="totalReq">-</span></div>
+        
+        <div class="time">Son Güncelleme: <span id="time">-</span></div>
+
+        <div class="admin-panel">
+            <button class="btn-fault" onclick="toggleFault()">💥 Arıza Modu</button>
+            <button class="btn-slow" onclick="toggleSlow()">🐢 Yavaş Mod</button>
+        </div>
+    </div>
+
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/healthHub")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("ReceiveHealthUpdate", (data) => {
+            document.getElementById("serviceName").innerText = data.serviceName;
+            
+            const statusEl = document.getElementById("status");
+            statusEl.innerText = data.status;
+            statusEl.className = data.status.includes("Healthy") ? "healthy" : "unhealthy";
+            
+            document.getElementById("latency").innerText = data.latency;
+            
+            const failuresEl = document.getElementById("failures");
+            failuresEl.innerText = data.consecutiveFailures;
+            failuresEl.className = data.consecutiveFailures > 0 ? "warning" : "";
+
+            document.getElementById("time").innerText = data.timestamp;
+        });
+
+        // 1. Manuel Arıza Modunu Tetikle (API Proxy üzerinden)
+        async function toggleFault() {
+            try {
+                const res = await fetch('/api/admin/toggle-fault', { method: 'POST' });
+                const data = await res.json();
+                alert(data.message);
+            } catch (err) {
+                console.error("Arıza modu değiştirilemedi:", err);
+                alert("İşlem başarısız!");
+            }
+        }
+
+        // 2. Yavaş Modu Tetikle (API Proxy üzerinden)
+        async function toggleSlow() {
+            try {
+                const res = await fetch('/api/admin/toggle-slow', { method: 'POST' });
+                const data = await res.json();
+                alert(data.message);
+            } catch (err) {
+                console.error("Yavaş mod değiştirilemedi:", err);
+                alert("İşlem başarısız!");
+            }
+        }
+
+        connection.start()
+            .then(() => console.log("SignalR bağlantısı aktif."))
+            .catch(err => console.error("SignalR bağlantı hatası: ", err));
+    </script>
+</body>
+</html>
